@@ -12,6 +12,9 @@
 	"bugs": {
 		"url": "https://github.com/buddingnewinsights/pi-search/issues"
 	},
+	"publishConfig": {
+		"access": "public"
+	},
 	"keywords": [
 		"pi-package",
 		"pi",
@@ -27,7 +30,6 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.3.5",
-		"@sinclair/typebox": "^0.34.0",
 		"@types/node": "^20.0.0",
 		"typescript": "^5.0.0",
 		"vitest": "^4.0.18"
