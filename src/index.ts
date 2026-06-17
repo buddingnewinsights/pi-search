@@ -23,6 +23,8 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Type } from "@sinclair/typebox";
+import { getMarkdownTheme, type Theme } from "@earendil-works/pi-coding-agent";
+import { Markdown, Text } from "@earendil-works/pi-tui";
 
 // ===========================================================================
 // Config
@@ -481,12 +483,32 @@ export default function piSearchExtension(pi: { registerTool: (tool: Record<stri
 						content: [
 							{ type: "text" as const, text: formatCitationMarkers(truncateExaResults(result.text), citations) },
 						],
-						details: { citations },
+						details: { query: params.query, citations },
 					};
 				} catch (err) {
 					const msg = errorMessage(err);
 					return { content: [{ type: "text" as const, text: `Web search failed: ${msg}` }], details: {} };
 				}
+			},
+
+			renderCall(args: any, theme: Theme) {
+				return new Text(theme.fg("toolTitle", theme.bold("websearch ")) + theme.fg("accent", args.query), 0, 0);
+			},
+
+			renderResult(result: any, { expanded }: { expanded: boolean }, theme: Theme) {
+				const details = result.details as { query: string; citations: Citation[] };
+				const count = details.citations?.length ?? 0;
+				if (!expanded) {
+					return new Text(
+						theme.fg("success", `Found ${count} results for `) +
+							theme.fg("accent", `"${details.query}"`) +
+							theme.fg("muted", " (Ctrl+O to expand)"),
+						0,
+						0,
+					);
+				}
+				const text = result.content[0].type === "text" ? result.content[0].text : "";
+				return new Markdown(text, 0, 0, getMarkdownTheme());
 			},
 		});
 
@@ -525,7 +547,7 @@ export default function piSearchExtension(pi: { registerTool: (tool: Record<stri
 						content: [
 							{ type: "text" as const, text: formatCitationMarkers(truncateExaResults(result.text), citations) },
 						],
-						details: { backend: "web_search_exa", citations },
+						details: { query: params.query, backend: "web_search_exa", citations },
 					};
 				} catch (err) {
 					const msg = errorMessage(err);
@@ -534,6 +556,26 @@ export default function piSearchExtension(pi: { registerTool: (tool: Record<stri
 						details: { backend: "web_search_exa" },
 					};
 				}
+			},
+
+			renderCall(args: any, theme: Theme) {
+				return new Text(theme.fg("toolTitle", theme.bold("codesearch ")) + theme.fg("accent", args.query), 0, 0);
+			},
+
+			renderResult(result: any, { expanded }: { expanded: boolean }, theme: Theme) {
+				const details = result.details as { query: string; citations: Citation[] };
+				const count = details.citations?.length ?? 0;
+				if (!expanded) {
+					return new Text(
+						theme.fg("success", `Found ${count} code results for `) +
+							theme.fg("accent", `"${details.query}"`) +
+							theme.fg("muted", " (Ctrl+O to expand)"),
+						0,
+						0,
+					);
+				}
+				const text = result.content[0].type === "text" ? result.content[0].text : "";
+				return new Markdown(text, 0, 0, getMarkdownTheme());
 			},
 		});
 
@@ -740,7 +782,13 @@ context7({ operation: "query", libraryId: "/reactjs/react.dev", topic: "hooks" }
 								text,
 							},
 						],
-						details: { operation: "query", libraryId, topic, length: content.length, offset: params.offset ?? 0 },
+						details: {
+							operation: "query",
+							libraryId,
+							topic,
+							length: content.length,
+							offset: params.offset ?? 0,
+						},
 					};
 				} catch (error: unknown) {
 					if (error instanceof DOMException && error.name === "AbortError") {
@@ -755,6 +803,34 @@ context7({ operation: "query", libraryId: "/reactjs/react.dev", topic: "hooks" }
 						details: { operation: "query", error: message },
 					};
 				}
+			},
+
+			renderCall(args: any, theme: Theme) {
+				let text = theme.fg("toolTitle", theme.bold("context7 "));
+				if (args.operation === "resolve") {
+					text += theme.fg("muted", "resolve ") + theme.fg("accent", args.libraryName);
+				} else {
+					text += theme.fg("muted", "query ") + theme.fg("accent", `${args.libraryId} > ${args.topic}`);
+				}
+				return new Text(text, 0, 0);
+			},
+
+			renderResult(result: any, { expanded }: { expanded: boolean }, theme: Theme) {
+				const details = result.details as any;
+				if (details.operation === "resolve") {
+					return new Text(theme.fg("success", `Resolved ${details.results} libraries for "${details.query}"`), 0, 0);
+				}
+				if (!expanded) {
+					return new Text(
+						theme.fg("success", "Fetched documentation for ") +
+							theme.fg("accent", `${details.libraryId} > ${details.topic}`) +
+							theme.fg("muted", " (Ctrl+O to expand)"),
+						0,
+						0,
+					);
+				}
+				const text = result.content[0].type === "text" ? result.content[0].text : "";
+				return new Markdown(text, 0, 0, getMarkdownTheme());
 			},
 		});
 
@@ -846,7 +922,7 @@ Examples:
 						content: [
 							{ type: "text" as const, text: paginateText(text, 0, MAX_PAGE_CHARS, `# DeepWiki: ${repo}\n\n`) },
 						],
-						details: { operation, repo, backend: "deepwiki_mcp", toolName },
+						details: { operation, repo, backend: "deepwiki_mcp", toolName, question: params.question },
 					};
 				} catch (err) {
 					const msg = errorMessage(err);
@@ -855,6 +931,28 @@ Examples:
 						details: { operation, repo, backend: "deepwiki_mcp", toolName, error: msg },
 					};
 				}
+			},
+
+			renderCall(args: any, theme: Theme) {
+				let text = theme.fg("toolTitle", theme.bold("deepwiki ")) + theme.fg("accent", args.repo);
+				if (args.operation === "ask" || args.question) {
+					text += theme.fg("muted", " ask ") + theme.fg("dim", `"${args.question}"`);
+				} else {
+					text += theme.fg("muted", ` ${args.operation ?? "contents"}`);
+				}
+				return new Text(text, 0, 0);
+			},
+
+			renderResult(result: any, { expanded }: { expanded: boolean }, theme: Theme) {
+				const details = result.details as any;
+				if (!expanded) {
+					let summary = `DeepWiki: ${details.repo}`;
+					if (details.operation === "ask") summary += ` > ${details.question}`;
+					else summary += ` > ${details.operation}`;
+					return new Text(theme.fg("success", summary) + theme.fg("muted", " (Ctrl+O to expand)"), 0, 0);
+				}
+				const text = result.content[0].type === "text" ? result.content[0].text : "";
+				return new Markdown(text, 0, 0, getMarkdownTheme());
 			},
 		});
 
@@ -903,7 +1001,7 @@ Example:
 					const text = paginateText(result.text, params.offset ?? 0, MAX_PAGE_CHARS);
 					return {
 						content: [{ type: "text" as const, text: formatCitationMarkers(text, citations) }],
-						details: { citations },
+						details: { url, citations },
 					};
 				} catch (err) {
 					const msg = errorMessage(err);
@@ -911,6 +1009,23 @@ Example:
 						content: [{ type: "text" as const, text: `Fetch failed: ${msg}` }],
 					};
 				}
+			},
+
+			renderCall(args: any, theme: Theme) {
+				return new Text(theme.fg("toolTitle", theme.bold("web_fetch ")) + theme.fg("accent", args.url), 0, 0);
+			},
+
+			renderResult(result: any, { expanded }: { expanded: boolean }, theme: Theme) {
+				const details = result.details as any;
+				if (!expanded) {
+					return new Text(
+						theme.fg("success", "Fetched ") + theme.fg("accent", details.url) + theme.fg("muted", " (Ctrl+O to expand)"),
+						0,
+						0,
+					);
+				}
+				const text = result.content[0].type === "text" ? result.content[0].text : "";
+				return new Markdown(text, 0, 0, getMarkdownTheme());
 			},
 		});
 }
