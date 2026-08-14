@@ -1,5 +1,5 @@
 import type { ExtensionAPI, ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { buildErrorResult, toPiSearchError, ValidationError } from "../errors.js";
 import {
 	DEFAULT_HIGHLIGHTS_MAX_CHARACTERS,

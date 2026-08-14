@@ -1,5 +1,5 @@
 import type { ExtensionAPI, ToolDefinition } from "@earendil-works/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { buildErrorResult, ConfigError, toPiSearchError, ValidationError } from "../errors.js";
 import { FETCH_CONTENT_CUSTOM_TYPE, putFetchContent } from "../fetch/content-store.js";
 import { FirecrawlClient } from "../firecrawl/client.js";

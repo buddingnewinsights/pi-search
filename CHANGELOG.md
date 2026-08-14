@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- Align Pi SDK dependencies with Pi 0.82.x and use Pi's supported `typebox` schema package.
+
 ## 0.3.0
 
 ### Minor Changes

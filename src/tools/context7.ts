@@ -9,7 +9,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { resolveConfig } from "../config.js";
 import { buildErrorResult, FetchError, toPiSearchError, ValidationError } from "../errors.js";
 import { renderContext7Result, renderToolCall } from "./render.js";

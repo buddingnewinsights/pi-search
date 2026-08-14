@@ -7,7 +7,7 @@
  */
 
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { Type } from "@sinclair/typebox";
+import { Type } from "typebox";
 import { resolveConfig } from "../config.js";
 import { buildErrorResult, toPiSearchError, ValidationError } from "../errors.js";
 import { renderDeepwikiResult, renderToolCall } from "./render.js";
