@@ -76,7 +76,8 @@ export type ResolveConfigOptions = ReadConfigOptions & {
 
 export function resolveConfig(options: ResolveConfigOptions = {}): ResolvedConfig {
 	const env = options.env ?? process.env;
-	const file = readConfig(options);
+	const configPath = options.configPath ?? env.PI_SEARCH_CONFIG_PATH;
+	const file = readConfig(configPath !== undefined ? { ...options, configPath } : options);
 	const homeDir = options.homeDir ?? homedir();
 	const fileDisabled = Array.isArray(file.disabledTools) ? file.disabledTools : [];
 	const argDisabled = options.disabledToolsFromArgs ?? [];

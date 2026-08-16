@@ -1,8 +1,21 @@
-import { describe, expect, it } from "vitest";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { resolveConfig, validateDisabledTools } from "../src/config.js";
 import piSearchExtension, { TOOL_NAMES } from "../src/index.js";
 
+// Never read the real user config (~/.pi/pi-search.json) during tests.
+const HERMETIC_CONFIG = join(tmpdir(), "pi-search-test-absent.json");
+const originalConfigPath = process.env.PI_SEARCH_CONFIG_PATH;
+
 describe("pi-search extension", () => {
+	beforeEach(() => {
+		process.env.PI_SEARCH_CONFIG_PATH = HERMETIC_CONFIG;
+	});
+	afterEach(() => {
+		if (originalConfigPath === undefined) delete process.env.PI_SEARCH_CONFIG_PATH;
+		else process.env.PI_SEARCH_CONFIG_PATH = originalConfigPath;
+	});
 	it("exports tool names", () => {
 		expect(TOOL_NAMES).toEqual([
 			"websearch",
