@@ -10,18 +10,28 @@ const DEFAULT_MAX_OUTPUT_CHARS = 50_000;
 const MAX_OUTPUT_CHARS_LIMIT = 200_000;
 
 export function createWebFetchTool(pi: ExtensionAPI, config: ResolvedConfig): ToolDefinition {
+	const canRetrieveStoredContent = !config.disabledTools.has("get_fetch_content");
+
 	return {
 		name: "web_fetch",
 		label: "⚙ web_fetch",
 		renderCall: renderToolCall("web_fetch"),
 		renderResult: renderWebFetchResult,
-		description:
-			"Fetch a URL and return readable content (Readability/turndown for HTML; Jina Reader fallback on thin/consent pages; GitHub URLs via API). Large pages store full text — use fetchId with get_fetch_content. Survives Pi session resume via session JSONL. For local video/PDF use pi-web-access fetch_content.",
+		description: canRetrieveStoredContent
+			? "Read a specific public URL (HTTP/HTTPS) selected by the user or websearch and return readable content. Use only for external page content. Do not use for greetings, local files, or local repository work. Large bodies can be continued with get_fetch_content."
+			: "Read a specific public URL (HTTP/HTTPS) selected by the user or websearch and return readable content. Use only for external page content. Do not use for greetings, local files, or local repository work.",
+		promptSnippet: "Read a specific external URL selected by the user or websearch",
+		promptGuidelines: [
+			"Use web_fetch only for a user-provided or search-result URL when external page content is needed.",
+			"Do not use web_fetch for greetings, local files, or local repository questions.",
+		],
 		parameters: Type.Object({
 			url: Type.String({ description: "The URL to fetch (must be http:// or https://)." }),
 			maxOutputChars: Type.Optional(
 				Type.Number({
-					description: `Maximum characters to return inline (default ${DEFAULT_MAX_OUTPUT_CHARS}). Full body may still be stored for get_fetch_content.`,
+					description: canRetrieveStoredContent
+						? `Maximum characters to return inline (default ${DEFAULT_MAX_OUTPUT_CHARS}). Full body may still be continued with get_fetch_content.`
+						: `Maximum characters to return inline (default ${DEFAULT_MAX_OUTPUT_CHARS}).`,
 					minimum: 1000,
 					maximum: MAX_OUTPUT_CHARS_LIMIT,
 				}),
@@ -45,7 +55,11 @@ export function createWebFetchTool(pi: ExtensionAPI, config: ResolvedConfig): To
 				const inlineLimit = Math.min(maxOutputChars, WEB_FETCH_INLINE_MAX_CHARS);
 				const inlineBody =
 					resolved.text.length > inlineLimit
-						? `${resolved.text.slice(0, inlineLimit)}\n\n[truncated — full ${resolved.text.length} chars stored; use get_fetch_content with fetchId ${fetchId}]`
+						? `${resolved.text.slice(0, inlineLimit)}\n\n${
+								canRetrieveStoredContent
+									? `[truncated — full ${resolved.text.length} chars stored; use get_fetch_content with fetchId ${fetchId}]`
+									: `[truncated — ${resolved.text.length} chars total]`
+							}`
 						: resolved.text;
 
 				const header = resolved.title ? `# ${resolved.title}\n\n` : "";

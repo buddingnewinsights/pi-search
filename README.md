@@ -25,16 +25,16 @@ If you also use [pi-web-access](https://github.com/nicobailon/pi-web-access), se
 
 ## Tools
 
-| Tool | Purpose | When to use |
-| --- | --- | --- |
-| `websearch` | Search the open web | Exa discovery; `includeContent: true` fetches up to 5 result URLs for `get_fetch_content`. |
-| `codesearch` | Code/library search | Looking for API references, library patterns, implementation examples. |
-| `context7` | Up-to-date library docs | Fetch current documentation for a library: `libraryName: "react"`, `topic: "hooks"`. |
-| `deepwiki` | Ask about a public GitHub repo | `repoName: "facebook/react"`, `question: "How does the reconciler work?"`. |
-| `web_fetch` | Extract readable content from a URL | HTML, **PDF text** (no OCR), GitHub API; disk cache `~/.pi/pi-search-fetch-cache/` (7d). |
-| `get_fetch_content` | Read stored fetch body | `fetchId` or `list: true`. Session JSONL (1h) + disk cache (7d). |
-| `firecrawl_scrape` | Scrape a single URL via Firecrawl | Get clean Markdown from any public page. Uses Firecrawl rendering engine. |
-| `firecrawl_crawl` | Crawl a website via Firecrawl | Collect multiple pages from a site. Polls async job to completion. Supports path filters and pagination. ⚠ Consumes credits. |
+| Tool                | Purpose                             | When to use                                                                                                                                               |
+| ------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `websearch`         | Search the external web             | Exa discovery; `includeContent: true` fetches up to 5 result URLs for `get_fetch_content` when that tool is enabled. Not for local files or repositories. |
+| `codesearch`        | Search external code/docs           | Looking for external API references, library patterns, and implementation examples; not for the local workspace.                                          |
+| `context7`          | Up-to-date library docs             | Fetch current documentation for a library: required `libraryName: "react"`, optional `topic: "hooks"`.                                                    |
+| `deepwiki`          | Ask about a public GitHub repo      | `repoName: "facebook/react"`, `question: "How does the reconciler work?"`.                                                                                |
+| `web_fetch`         | Extract readable content from a URL | HTML, **PDF text** (no OCR), GitHub API; disk cache `~/.pi/pi-search-fetch-cache/` (7d).                                                                  |
+| `get_fetch_content` | Read stored fetch body              | `fetchId` or `list: true`. Session JSONL (1h) + disk cache (7d).                                                                                          |
+| `firecrawl_scrape`  | Scrape a single URL via Firecrawl   | Get clean Markdown from any public page. Uses Firecrawl rendering engine.                                                                                 |
+| `firecrawl_crawl`   | Crawl a website via Firecrawl       | Collect multiple pages from a site. Polls async job to completion. Supports path filters and pagination. ⚠ Consumes credits.                              |
 
 ## Configuration
 
@@ -42,14 +42,14 @@ Optional. Create `~/.pi/pi-search.json`:
 
 ```json
 {
-  "exaApiKey": "your-exa-api-key",
-  "braveApiKey": "your-brave-api-key",
-  "firecrawlApiKey": "your-firecrawl-api-key",
-  "disabledTools": ["codesearch"],
-  "mcpTimeoutMs": 30000,
-  "ssrf": {
-    "allowRanges": ["198.18.0.0/15"]
-  }
+	"exaApiKey": "your-exa-api-key",
+	"braveApiKey": "your-brave-api-key",
+	"firecrawlApiKey": "your-firecrawl-api-key",
+	"disabledTools": ["codesearch"],
+	"mcpTimeoutMs": 30000,
+	"ssrf": {
+		"allowRanges": ["198.18.0.0/15"]
+	}
 }
 ```
 
@@ -67,6 +67,7 @@ export PI_SEARCH_CONFIG_PATH=/path/to/config.json
 ```
 
 Resolution order (highest priority first):
+
 1. environment variables
 2. `~/.pi/pi-search.json` (or `PI_SEARCH_CONFIG_PATH`)
 3. defaults
@@ -103,6 +104,8 @@ Planned work (fetch fallbacks, GitHub URL routing, SSRF/proxy options, large-con
 
 ## Agent workflow (Pi)
 
+The research tools target public external resources. Use Pi's local tools (`read`, `bash`, `find`, and `grep`) for local files and repository searches.
+
 - **Discover:** `websearch` (Exa deep modes) → `web_fetch` or `includeContent: true` on search → `get_fetch_content` with `fetchId` or `list: true`.
 - **Libraries / repos:** `context7`, `codesearch`, `deepwiki`; GitHub URLs in `web_fetch` use the API (`GITHUB_TOKEN`, `GH_TOKEN`, or `gh auth token`).
 - **Doc site roots:** `web_fetch` on `https://example.com/` may load `/llms.txt` when present.
@@ -125,11 +128,11 @@ Details: coexistence table in [`docs/ROADMAP.md`](docs/ROADMAP.md#coexistence-wi
 
 ```bash
 make install        # npm ci
-make check          # biome + tsc + vitest --coverage
+make check          # oxfmt --check + oxlint + tsc + vitest --coverage
 make test           # vitest
 make build          # tsc → dist/
-make format         # biome format --write .
-make lint           # biome lint
+make format         # oxfmt
+make lint           # oxlint
 make typecheck      # tsc --noEmit
 make release-dry-run
 make version-packages

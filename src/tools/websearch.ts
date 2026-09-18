@@ -15,11 +15,18 @@ import type { ExaQueryRun, ResolvedConfig } from "../types.js";
 import { renderToolCall, renderWebsearchResult } from "./render.js";
 
 export function createWebsearchTool(pi: ExtensionAPI, config: ResolvedConfig): ToolDefinition {
+	const canRetrieveStoredContent = !config.disabledTools.has("get_fetch_content");
+
 	return {
 		name: "websearch",
 		label: "⚙ websearch",
 		description:
-			"Search the open web for source discovery (Exa). Returns URL, title, published date, and a short highlight per result. Use searchType='deep' / 'deep-reasoning' for sitreps; recencyFilter and domainFilter to shape results. Prefer this over pi-web-access web_search when you need Exa deep modes or cited highlights—not synthesized answers or browser curation. Optional BRAVE_API_KEY enables failover when Exa fails or returns no results.",
+			"Search the external web via Exa for current facts, source URLs, and external references. Use only for web research or citations. Do not use for greetings, local files, or local repository work. Use web_fetch for a specific URL.",
+		promptSnippet: "Search external web sources for current facts and citations",
+		promptGuidelines: [
+			"Use websearch only for external or current information; do not use it for greetings or local repository search.",
+			"Use web_fetch when the user provides or selects a specific URL.",
+		],
 		parameters: Type.Object({
 			query: Type.Optional(Type.String({ description: "Single search query." })),
 			queries: Type.Optional(Type.Array(Type.String(), { description: "Multiple queries searched sequentially." })),
@@ -30,12 +37,16 @@ export function createWebsearchTool(pi: ExtensionAPI, config: ResolvedConfig): T
 					maximum: 10,
 				}),
 			),
-			includeContent: Type.Optional(
-				Type.Boolean({
-					description:
-						"When true, fetches full page content for up to 5 result URLs in the background (stored for get_fetch_content).",
-				}),
-			),
+			...(canRetrieveStoredContent
+				? {
+						includeContent: Type.Optional(
+							Type.Boolean({
+								description:
+									"When true, fetches full page content for up to 5 result URLs in the background for get_fetch_content.",
+							}),
+						),
+					}
+				: {}),
 			searchType: Type.Optional(
 				Type.Union(
 					[
@@ -61,7 +72,8 @@ export function createWebsearchTool(pi: ExtensionAPI, config: ResolvedConfig): T
 			endPublishedDate: Type.Optional(Type.String({ description: "ISO date or datetime upper bound." })),
 			domainFilter: Type.Optional(
 				Type.Array(Type.String(), {
-					description: "Domains to include or exclude with a - prefix, e.g. ['reuters.com', '-reddit.com'].",
+					description:
+						"Domain shortcuts: use domain names to include them or prefix with - to exclude, e.g. ['reuters.com', '-reddit.com'].",
 				}),
 			),
 			includeDomains: Type.Optional(Type.Array(Type.String(), { description: "Explicit domains to include." })),
@@ -105,8 +117,9 @@ export function createWebsearchTool(pi: ExtensionAPI, config: ResolvedConfig): T
 					}
 				}
 
+				const includeContent = canRetrieveStoredContent && effectiveParams.includeContent;
 				let includeContentNote = "";
-				if (effectiveParams.includeContent && urls.length > 0) {
+				if (includeContent && urls.length > 0) {
 					const slice = urls.slice(0, 5);
 					void fetchSearchResultUrlsInBackground(pi, config, slice, signal).catch(() => {});
 					includeContentNote = `\n\n---\nFetching full content for ${slice.length} URL(s) in background. Use get_fetch_content with list=true shortly.`;
@@ -117,11 +130,11 @@ export function createWebsearchTool(pi: ExtensionAPI, config: ResolvedConfig): T
 					content: [{ type: "text", text }],
 					details: {
 						provider,
-						effectiveParams,
+						effectiveParams: { ...effectiveParams, includeContent },
 						queries: queryRuns,
 						failover: provider === "brave",
-						includeContent: effectiveParams.includeContent,
-						backgroundFetchUrls: effectiveParams.includeContent ? urls.slice(0, 5) : undefined,
+						includeContent,
+						backgroundFetchUrls: includeContent ? urls.slice(0, 5) : undefined,
 					},
 				};
 			} catch (error) {

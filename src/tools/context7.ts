@@ -39,9 +39,7 @@ export function createContext7Tool(_pi: ExtensionAPI) {
 		description:
 			"Fetch up-to-date documentation and code examples for a library via Context7. Use libraryName='react' or '/reactjs/react.dev' for the official React docs, '/vercel/next.js' for Next.js, etc. Returns ready-to-use code snippets and citations.",
 		parameters: Type.Object({
-			libraryName: Type.Optional(
-				Type.String({ description: "Library name or Context7 path (e.g. 'react', '/reactjs/react.dev')." }),
-			),
+			libraryName: Type.String({ description: "Library name or Context7 path (e.g. 'react', '/reactjs/react.dev')." }),
 			topic: Type.Optional(Type.String({ description: "Specific topic to focus on (e.g. 'hooks', 'routing')." })),
 			maxTokens: Type.Optional(
 				Type.Integer({ description: "Maximum tokens to return (default 10000).", minimum: 1000, maximum: 50000 }),

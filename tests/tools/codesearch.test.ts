@@ -1,13 +1,21 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createCodesearchTool } from "../../src/tools/codesearch.js";
 
 const originalFetch = globalThis.fetch;
 const originalEnv = { ...process.env };
+// Never read the real user config (~/.pi/pi-search.json) during tests.
+const HERMETIC_CONFIG = join(tmpdir(), "pi-search-codesearch-test-absent.json");
 
 describe("codesearch tool", () => {
 	beforeEach(() => {
 		for (const key of Object.keys(process.env)) delete process.env[key];
-		Object.assign(process.env, { PI_SEARCH_USE_REST: "true", EXA_API_KEY: "test-key" });
+		Object.assign(process.env, {
+			PI_SEARCH_CONFIG_PATH: HERMETIC_CONFIG,
+			PI_SEARCH_USE_REST: "true",
+			EXA_API_KEY: "test-key",
+		});
 	});
 	afterEach(() => {
 		globalThis.fetch = originalFetch;

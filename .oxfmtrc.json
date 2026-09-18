@@ -1,0 +1,16 @@
+{
+	"$schema": "./node_modules/oxfmt/configuration_schema.json",
+	"useTabs": true,
+	"printWidth": 120,
+	"ignorePatterns": [
+		".pi/**",
+		".changeset/**",
+		"coverage/**",
+		"dist/**",
+		"docs/**",
+		"node_modules/**",
+		"release-notes/**",
+		"tools/oxlint/anti-slop/**",
+		"CHANGELOG.md"
+	]
+}

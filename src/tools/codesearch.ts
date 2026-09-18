@@ -38,7 +38,11 @@ export function createCodesearchTool(_pi: ExtensionAPI) {
 		name: "codesearch",
 		label: "⚙ codesearch",
 		description:
-			"Search for code-relevant sources (docs, examples, library references) via Exa. Use this when looking for API references, library patterns, or implementation examples. Prefer websearch for general topical research.",
+			"Search public external code and documentation via Exa for API references, library patterns, and examples. Use only for external sources; do not use for searching the local workspace or repository.",
+		promptSnippet: "Search external code and library documentation",
+		promptGuidelines: [
+			"Use codesearch only for external code or library references, never for local repository search.",
+		],
 		parameters: Type.Object({
 			query: Type.Optional(Type.String({ description: "Single search query." })),
 			queries: Type.Optional(Type.Array(Type.String(), { description: "Multiple queries searched sequentially." })),

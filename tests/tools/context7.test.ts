@@ -23,6 +23,7 @@ describe("context7 tool", () => {
 		const tool = createContext7Tool({} as never);
 		expect(tool.name).toBe("context7");
 		expect(tool.label).toBe("⚙ context7");
+		expect((tool.parameters as { required?: string[] }).required).toContain("libraryName");
 	});
 
 	it("rejects missing libraryName with validation_error", async () => {

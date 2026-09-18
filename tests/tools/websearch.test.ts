@@ -28,10 +28,42 @@ describe("websearch tool", () => {
 		Object.assign(process.env, originalEnv);
 	});
 
-	it("returns the expected schema name and label", () => {
+	it("returns a scoped web tool definition", () => {
 		const tool = createWebsearchTool({ appendEntry: vi.fn(), on: vi.fn() } as never, baseConfig());
 		expect(tool.name).toBe("websearch");
 		expect(tool.label).toBe("⚙ websearch");
+		expect(tool.description).toContain("external");
+		expect(tool.description).toContain("Do not use for greetings");
+	});
+
+	it("hides stored-content fetching when get_fetch_content is disabled", () => {
+		const tool = createWebsearchTool(
+			{ appendEntry: vi.fn(), on: vi.fn() } as never,
+			baseConfig({ disabledTools: new Set(["get_fetch_content"]) }),
+		);
+		const properties = (tool.parameters as { properties: Record<string, unknown> }).properties;
+		expect(properties.includeContent).toBeUndefined();
+	});
+
+	it("ignores stored-content fetching when get_fetch_content is disabled", async () => {
+		const mockFetch = vi
+			.fn()
+			.mockResolvedValue(
+				new Response(
+					JSON.stringify({ results: [{ title: "Example", url: "https://example.com/page", highlights: ["h"] }] }),
+					{ status: 200 },
+				),
+			);
+		globalThis.fetch = mockFetch as unknown as typeof fetch;
+
+		const tool = createWebsearchTool(
+			{ appendEntry: vi.fn(), on: vi.fn() } as never,
+			baseConfig({ disabledTools: new Set(["get_fetch_content"]) }),
+		);
+		const result = await tool.execute("id", { query: "test", includeContent: true }, undefined, undefined);
+
+		expect(result.content[0].text).not.toContain("get_fetch_content");
+		expect((result.details as { includeContent?: boolean }).includeContent).toBe(false);
 	});
 
 	it("calls the direct REST Exa endpoint with effective params", async () => {

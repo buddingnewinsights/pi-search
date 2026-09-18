@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Patch Changes
+
+- Tighten research tool descriptions and schemas so external web tools are less likely to be used for local tasks. Hide stored-content search parameters when `get_fetch_content` is disabled and require `libraryName` in the Context7 schema.
+
 ## 0.3.1
 
 ### Patch Changes
